@@ -10,9 +10,11 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, InlineKeyboardButton, CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, \
-    ReplyKeyboardRemove
+    ReplyKeyboardRemove, ChatJoinRequest
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters import Command, StateFilter
+from aiogram.filters import IS_MEMBER, IS_NOT_MEMBER, ChatMemberUpdatedFilter
+from aiogram.types import ChatMemberUpdated
 
 
 load_dotenv()
@@ -212,22 +214,26 @@ async def process_arrival_date(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@dp.message(Command("start"))
-async def start_handler(msg: Message):
+@dp.message(F.new_chat_members)
+async def new_member(msg: Message):
     if msg.from_user.last_name is not None:
-        await msg.answer(f'Привет, {msg.from_user.first_name} {msg.from_user.last_name}! 👋\n'
-                         "Добро пожаловать на Ticketbag – Ваш партнер в каждом путешествии!\n\n"
-                         "На TicketBag Вы найдете партнеров для перевозки багажа, "
-                         "и сможете предложить свободное место в вашем багаже другим пользователям.\n\n"
-                         "Чтобы добавить маршрут воспользуйся @Ticketbag_bot и введи команду /add_route.\n",
-                         parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+        await bot.send_message(
+            msg.chat.id, f'Привет, {msg.from_user.first_name} {msg.from_user.last_name}! 👋\n'
+            "Добро пожаловать на Ticketbag – Ваш партнер в каждом путешествии!\n\n"
+            "На TicketBag Вы найдете партнеров для перевозки багажа, "
+            "и сможете предложить свободное место в вашем багаже другим пользователям.\n\n"
+            "Чтобы добавить маршрут используй @Ticketbag_bot\n",
+            parse_mode=ParseMode.HTML, disable_web_page_preview=True
+        )
     else:
-        await msg.answer(f'Привет, {msg.from_user.first_name}! 👋\n'
-                         "Добро пожаловать на Ticketbag – Ваш партнер в каждом путешествии!\n\n"
-                         "На TicketBag Вы найдете партнеров для перевозки багажа, "
-                         "и сможете предложить свободное место в вашем багаже другим пользователям.\n\n"
-                         "Чтобы добавить маршрут воспользуйся @Ticketbag_bot и введи команду /add_route.\n",
-                         parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+        await bot.send_message(
+            msg.chat.id, f'Привет, {msg.from_user.first_name}! 👋\n'
+            "Добро пожаловать на Ticketbag – Ваш партнер в каждом путешествии!\n\n"
+             "На TicketBag Вы найдете партнеров для перевозки багажа, "
+             "и сможете предложить свободное место в вашем багаже другим пользователям.\n\n"
+             "Чтобы добавить маршрут используй @Ticketbag_bot\n",
+             parse_mode=ParseMode.HTML, disable_web_page_preview=True
+        )
 
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
@@ -243,16 +249,21 @@ async def start_handler(msg: Message):
         url="https://ticketbag.info")
     )
     await msg.answer(
-        "Подписывайтесь на нас: 👇👇",
+        "Подписывайся на нас: 👇👇",
         reply_markup=builder.as_markup()
     )
 
 
-@dp.message(F.new_chat_members)
-async def on_new_chat_members(msg: Message):
-    for member in msg.new_chat_members:
-        if not member.is_bot:
-            await msg.answer(f"Добро пожаловать, {member.mention}!")
+@dp.message(Command("start"))
+async def start_handler(msg: Message):
+    if msg.from_user.last_name is not None:
+        await msg.answer(f'Привет, {msg.from_user.first_name} {msg.from_user.last_name}! 👋\n'
+                          "Чтобы добавить маршрут перейди по ссылке /add_route\n",
+                         parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    else:
+        await msg.answer(f'Привет, {msg.from_user.first_name}! 👋\n'
+                         "Чтобы добавить маршрут перейди по ссылке /add_route\n",
+                         parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
 async def main():
